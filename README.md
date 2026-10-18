@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MS Technoverge website
 
-## Getting Started
+Marketing site for MS Technoverge, cybersecurity for critical industries in the GCC.
 
-First, run the development server:
+The homepage tells one story, a typical attack on a refinery, through a fixed 3D stage. Each scene starts realistic, then scans into a graphite "x-ray" drawing of its network that shows the attack and the control that stops it ("What you see. What we see."). 2D sections slide over the stage between scenes, each with a small interactive demo of the service involved.
+
+## Stack
+
+- Next.js 16 (App Router), React 19, TypeScript
+- three.js for the stage, with a custom composite pass (x-ray edges, scan line, cursor lens, depth-of-field blur, grain)
+- Lenis for smooth scrolling
+- Anime.js 4 for the masked word reveals on headlines
+- `next/font` for Archivo (display), Geist (text), Geist Mono (labels), plus Barlow and JetBrains Mono drawn into the 3D screens
+- `@lucasmarkes/hairline` for the "How we work" line figures
+
+## Run
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Where things live
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Path | What it is |
+| --- | --- |
+| `src/app/page.tsx` | Page order: story segments interleaved with 2D sections. Server-rendered, so all copy is in the HTML. |
+| `src/components/Stage.tsx` | Client controller: canvas, Lenis, render loop, preloader, scroll choreography (captions, statements, story clock, cursor lens label). |
+| `src/components/StorySegment.tsx` | A pinned 3D scene. `shot` picks the camera shot, `length` is its scroll length in viewport heights. |
+| `src/scene/engine.js` | The 3D world: five sets (office, network room, control room, SOC, refinery), screen textures, network overlay, post-processing and camera shots. |
+| `src/scene/engine.d.ts` | Types for the engine. |
+| `src/content/site.ts` | Copy and data for the interactive sections, industries and case studies. |
+| `src/components/*Demo.tsx`, `Timeline.tsx` | The interactive 2D demos (phishing email, multi-factor switch, network zones, detection timeline). |
+| `src/components/WorkSections.tsx` | Industries, case study carousel and lifecycle. |
 
-## Learn More
+## How the story is driven
 
-To learn more about Next.js, take a look at the following resources:
+- Each `StorySegment` is a tall section with a sticky stage inside. `Stage` measures every segment each frame and gives the engine a shot index and a progress value (0 to 1), or two shots and a mix when one scene hands over to the next.
+- `XR` in `engine.js` sets when each scene scans into x-ray (progress in and out). Captions fade out as the scan starts; the "What we see" statement rises in with it.
+- Screens inside the 3D (mail, sign-in log, firewall console, SOC case) are canvas textures redrawn only when their state changes.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Performance
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Phones (coarse pointer or under 820px wide) get a lower pixel ratio, 2x instead of 4x anti-aliasing, smaller shadow maps and lighter blur. The CSS grain layer is off on phones.
+- The stage skips rendering when nothing has changed (no scroll, no pointer, no animation).
+- Viewport height is held steady while a phone's address bar slides, so the page does not jump.
 
-## Deploy on Vercel
+## Copy rules
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- MS Technoverge does not run a SOC. Detection copy says we make the client's own team see more and act faster.
+- The attack story is labelled as a typical pattern; names, hosts and domains are fictional.
+- No em dashes in copy.
